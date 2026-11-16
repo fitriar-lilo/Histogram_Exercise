@@ -1,0 +1,6 @@
+{
+  "name": "IGCSE 0580 · Histograms",
+  "description": "Interactive Cambridge IGCSE Mathematics (0580) Chapter 20 Histogram structured essay questions, interactive frequency density graph grid, and worked mark schemes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
