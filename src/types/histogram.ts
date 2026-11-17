@@ -89,12 +89,16 @@ export interface HistogramQuestion {
   grid: GridConfig;
   /** Shows an editable Frequency Density column in the table */
   hasFdColumn: boolean;
+  /** Shows extra Mid Value (x) and Frequency × Mid Value (f × x) columns to scaffold mean calculation */
+  hasMeanColumns?: boolean;
   parts: QuestionSubPart[];
 }
 
 export interface QuestionUserState {
   tableFrequencies: Record<string, string>;
   tableFds: Record<string, string>;
+  tableMidValues?: Record<string, string>;
+  tableFxProducts?: Record<string, string>;
   drawnBars: Record<string, number>; // intervalId -> FD value in grid coordinates
   numericAnswers: Record<string, string>;
   essayAnswers: Record<string, string>;

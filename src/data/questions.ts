@@ -15,6 +15,7 @@ export const CHAPTER_20_QUESTIONS: HistogramQuestion[] = [
     examinerNote:
       'IGCSE Paper 4 examiners frequently deduct marks when candidates plot Frequency instead of Frequency Density on the vertical axis, or leave gaps between bars of continuous intervals.',
     hasFdColumn: true,
+    hasMeanColumns: true,
     intervals: [
       {
         id: 'q1-i1',
@@ -132,7 +133,8 @@ export const CHAPTER_20_QUESTIONS: HistogramQuestion[] = [
         label: '(c)',
         marks: 4,
         kind: 'numeric',
-        prompt: 'Calculate an estimate of the mean waiting time for these 100 patients.',
+        prompt:
+          'Use the Mid Value (x) and f × x columns in the table to help calculate an estimate of the mean waiting time for these 100 patients.',
         expectedNumber: 21.8,
         tolerance: 0.05,
         unit: 'minutes',

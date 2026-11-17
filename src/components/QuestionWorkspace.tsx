@@ -28,6 +28,8 @@ interface QuestionWorkspaceProps {
 export const emptyQuestionState = (): QuestionUserState => ({
   tableFrequencies: {},
   tableFds: {},
+  tableMidValues: {},
+  tableFxProducts: {},
   drawnBars: {},
   numericAnswers: {},
   essayAnswers: {},
@@ -179,6 +181,17 @@ export const QuestionWorkspace: React.FC<QuestionWorkspaceProps> = ({
   const tablePart = question.parts.find((p) => p.kind === 'table-fill');
   const isTableChecked = tablePart ? state.checkedParts[tablePart.id] : false;
 
+  const meanPart = question.parts.find(
+    (p) => p.kind === 'numeric' && p.prompt.toLowerCase().includes('mean')
+  );
+  const isMeanChecked = meanPart ? !!state.checkedParts[meanPart.id] : false;
+
+  const fxEnteredValues = question.intervals.map((i) =>
+    parseNumericInput(state.tableFxProducts?.[i.id] || '')
+  );
+  const hasAnyFx = fxEnteredValues.some((v) => v !== null);
+  const fxRunningSum = fxEnteredValues.reduce<number>((sum, v) => sum + (v ?? 0), 0);
+
   return (
     <div className="max-w-[1360px] mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
       {/* Question Selector Bar */}
@@ -286,12 +299,20 @@ export const QuestionWorkspace: React.FC<QuestionWorkspaceProps> = ({
                     {question.hasFdColumn && (
                       <th className="py-2.5 px-3 text-right">Frequency Density</th>
                     )}
+                    {question.hasMeanColumns && (
+                      <>
+                        <th className="py-2.5 px-3 text-right">Mid Value (x)</th>
+                        <th className="py-2.5 px-3 text-right">f × x</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-data">
                   {question.intervals.map((interval) => {
                     const userFreq = state.tableFrequencies[interval.id] || '';
                     const userFd = state.tableFds[interval.id] || '';
+                    const userMid = state.tableMidValues?.[interval.id] || '';
+                    const userFx = state.tableFxProducts?.[interval.id] || '';
 
                     const freqNum = parseNumericInput(userFreq);
                     const freqCorrect =
@@ -300,6 +321,16 @@ export const QuestionWorkspace: React.FC<QuestionWorkspaceProps> = ({
                     const fdNum = parseNumericInput(userFd);
                     const fdCorrect =
                       fdNum !== null && Math.abs(fdNum - interval.frequencyDensity) <= 0.05;
+
+                    const expectedMid = (interval.start + interval.end) / 2;
+                    const midNum = parseNumericInput(userMid);
+                    const midCorrect =
+                      midNum !== null && Math.abs(midNum - expectedMid) <= 0.05;
+
+                    const expectedFx = interval.frequency * expectedMid;
+                    const fxNum = parseNumericInput(userFx);
+                    const fxCorrect =
+                      fxNum !== null && Math.abs(fxNum - expectedFx) <= 0.5;
 
                     return (
                       <tr key={interval.id} className="hover:bg-slate-50/60">
@@ -374,7 +405,7 @@ export const QuestionWorkspace: React.FC<QuestionWorkspaceProps> = ({
                                   }
                                   placeholder="?"
                                   aria-label={`Frequency density for ${interval.label}`}
-                                  className={`w-20 px-2.5 py-1.5 text-right text-sm rounded-md border bg-white focus:outline-none focus:ring-2 focus:ring-sky-600 ${
+                                  className={`w-16 sm:w-20 px-2 py-1.5 text-right text-sm rounded-md border bg-white focus:outline-none focus:ring-2 focus:ring-sky-600 ${
                                     isTableChecked
                                       ? fdCorrect
                                         ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
@@ -395,6 +426,82 @@ export const QuestionWorkspace: React.FC<QuestionWorkspaceProps> = ({
                             )}
                           </td>
                         )}
+                        {question.hasMeanColumns && (
+                          <>
+                            <td className="py-2.5 px-3 text-right">
+                              <div className="inline-flex items-center justify-end gap-1.5">
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={userMid}
+                                  onChange={(e) =>
+                                    onUpdateState(question.id, (prev) => ({
+                                      ...prev,
+                                      tableMidValues: {
+                                        ...(prev.tableMidValues || {}),
+                                        [interval.id]: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  placeholder="x"
+                                  aria-label={`Mid value for ${interval.label}`}
+                                  className={`w-16 sm:w-20 px-2 py-1.5 text-right text-sm rounded-md border bg-white focus:outline-none focus:ring-2 focus:ring-sky-600 ${
+                                    isMeanChecked && userMid.trim() !== ''
+                                      ? midCorrect
+                                        ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
+                                        : 'border-red-400 bg-red-50/40 text-red-900'
+                                      : 'border-slate-300 text-slate-900'
+                                  }`}
+                                />
+                                {isMeanChecked && userMid.trim() !== '' && (
+                                  <span
+                                    className={`text-[11px] font-sans font-medium ${
+                                      midCorrect ? 'text-emerald-700' : 'text-red-700'
+                                    }`}
+                                  >
+                                    {midCorrect ? 'OK' : 'Check'}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <div className="inline-flex items-center justify-end gap-1.5">
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={userFx}
+                                  onChange={(e) =>
+                                    onUpdateState(question.id, (prev) => ({
+                                      ...prev,
+                                      tableFxProducts: {
+                                        ...(prev.tableFxProducts || {}),
+                                        [interval.id]: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  placeholder="f × x"
+                                  aria-label={`Product of frequency and mid value for ${interval.label}`}
+                                  className={`w-20 sm:w-22 px-2 py-1.5 text-right text-sm rounded-md border bg-white focus:outline-none focus:ring-2 focus:ring-sky-600 ${
+                                    isMeanChecked && userFx.trim() !== ''
+                                      ? fxCorrect
+                                        ? 'border-emerald-500 bg-emerald-50/40 text-emerald-900'
+                                        : 'border-red-400 bg-red-50/40 text-red-900'
+                                      : 'border-slate-300 text-slate-900'
+                                  }`}
+                                />
+                                {isMeanChecked && userFx.trim() !== '' && (
+                                  <span
+                                    className={`text-[11px] font-sans font-medium ${
+                                      fxCorrect ? 'text-emerald-700' : 'text-red-700'
+                                    }`}
+                                  >
+                                    {fxCorrect ? 'OK' : 'Check'}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}
@@ -404,6 +511,14 @@ export const QuestionWorkspace: React.FC<QuestionWorkspaceProps> = ({
                     <td className="py-2 px-3 text-right">{question.totalFrequency}</td>
                     {question.hasFdColumn && (
                       <td className="py-2 px-3 text-right text-slate-400">—</td>
+                    )}
+                    {question.hasMeanColumns && (
+                      <>
+                        <td className="py-2 px-3 text-right text-slate-400">—</td>
+                        <td className="py-2 px-3 text-right text-sky-700">
+                          {hasAnyFx ? `Σ = ${Number(fxRunningSum.toFixed(2))}` : '—'}
+                        </td>
+                      </>
                     )}
                   </tr>
                 </tbody>

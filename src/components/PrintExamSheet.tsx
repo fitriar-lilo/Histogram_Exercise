@@ -92,6 +92,12 @@ export const PrintExamSheet: React.FC<PrintExamSheetProps> = ({ questions }) => 
                   <th className="py-2 px-3">Class Interval</th>
                   <th className="py-2 px-3 text-right">Frequency</th>
                   {q.hasFdColumn && <th className="py-2 px-3 text-right">Frequency Density</th>}
+                  {q.hasMeanColumns && (
+                    <>
+                      <th className="py-2 px-3 text-right">Mid Value (x)</th>
+                      <th className="py-2 px-3 text-right">f × x</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -106,8 +112,23 @@ export const PrintExamSheet: React.FC<PrintExamSheetProps> = ({ questions }) => 
                         {row.fdGiven ? row.frequencyDensity : '............'}
                       </td>
                     )}
+                    {q.hasMeanColumns && (
+                      <>
+                        <td className="py-2 px-3 text-right">............</td>
+                        <td className="py-2 px-3 text-right">............</td>
+                      </>
+                    )}
                   </tr>
                 ))}
+                {q.hasMeanColumns && (
+                  <tr className="border-t border-slate-400 bg-slate-50 font-semibold">
+                    <td className="py-2 px-3">Total</td>
+                    <td className="py-2 px-3 text-right">{q.totalFrequency}</td>
+                    {q.hasFdColumn && <td className="py-2 px-3 text-right">—</td>}
+                    <td className="py-2 px-3 text-right">—</td>
+                    <td className="py-2 px-3 text-right">Σ = ............</td>
+                  </tr>
+                )}
               </tbody>
             </table>
 
